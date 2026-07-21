@@ -167,6 +167,15 @@ body{
 .opt-tt{font-size:16.5px;font-weight:800}
 .opt-ss{font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
 
+.dirseg{display:flex;gap:8px;background:#0E1122;border:1px solid var(--border);
+  border-radius:16px;padding:6px;margin-bottom:14px}
+.dirseg button{flex:1;height:52px;border:none;border-radius:12px;background:transparent;
+  color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:all .2s;line-height:1.15}
+.dirseg button .dsub{font-size:11px;font-weight:600;opacity:.8}
+.dirseg button.on{background:linear-gradient(170deg,#2C2712,#1C190D);color:var(--gold);
+  box-shadow:0 0 18px rgba(255,211,92,.28),inset 0 1px 0 rgba(255,211,92,.15)}
 .sec-div{display:flex;align-items:center;gap:14px;margin:20px 0 16px;
   color:var(--muted);font-size:15px}
 .sec-div::before,.sec-div::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.07)}
@@ -547,6 +556,10 @@ body{
 </div>
 <!-- P6: TAKSI JOYLASHUV -->
 <div class="page" id="p6">
+  <div class="dirseg" id="dirsegP">
+    <button id="dpAT" class="on" onclick="setDir('AT')">Andijon → Toshkent<span class="dsub">Toshkentga boraman</span></button>
+    <button id="dpTA" onclick="setDir('TA')">Toshkent → Andijon<span class="dsub">Andijonga boraman</span></button>
+  </div>
   <div class="card" style="padding:12px 15px;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:11px;padding:5px 0 9px;border-bottom:1px solid var(--border)">
       <span style="width:11px;height:11px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 8px rgba(61,220,132,.6)"></span>
@@ -839,6 +852,10 @@ body{
   </div>
 
   <div id="queueJoinBox">
+    <div class="dirseg" id="dirsegD" style="margin-top:6px">
+      <button id="ddAT" class="on" onclick="setDir('AT')">Andijon → Toshkent<span class="dsub">Toshkent tomon</span></button>
+      <button id="ddTA" onclick="setDir('TA')">Toshkent → Andijon<span class="dsub">Andijon tomon</span></button>
+    </div>
     <div class="q-title" style="margin:14px 0 16px">Bugun nechta<br>yo'lovchi olasiz?</div>
     <div class="num-grid">
       <div class="num-btn" id="qn1" onclick="setPassCount(1)">1</div>
@@ -958,6 +975,7 @@ var S = {
   phone: null,
   loc: null,
   addr: "",
+  dir: "AT",
   seatPref: null,
   seatCount: null,
   carModel: "",
@@ -1548,6 +1566,7 @@ async function sendCallTaxi(acceptFallback, groupId, pollFront) {
       user_id:  USER_ID,
       location: { lat: S.loc.lat, lng: S.loc.lng, address: S.addr },
       seat_pref: S.seatPref || "back",
+      direction: S.dir || "AT",
       accept_fallback: acceptFallback,
       no_fallback: !!pollFront,
       group_id: groupId
@@ -1623,6 +1642,17 @@ function fmtPrice(n) {
 function setTripSeat(v) {
   S.seatPref = v;
   syncTripSeat();
+}
+function setDir(d) {
+  S.dir = (d === "TA") ? "TA" : "AT";
+  var pairs = [["dpAT","dpTA"],["ddAT","ddTA"]];
+  for (var i=0;i<pairs.length;i++){
+    var a=document.getElementById(pairs[i][0]), b=document.getElementById(pairs[i][1]);
+    if(a) a.classList.toggle("on", S.dir==="AT");
+    if(b) b.classList.toggle("on", S.dir==="TA");
+  }
+  var dest = document.getElementById("destTxt");
+  if (dest) dest.textContent = (S.dir==="TA") ? "Andijon" : "Toshkent";
 }
 function syncTripSeat() {
   var f = document.getElementById("tripSeatFront");
@@ -1909,7 +1939,8 @@ function doJoinQueue() {
           driver_id: USER_ID,
           location: { lat: p.coords.latitude, lng: p.coords.longitude },
           front_available: Q.front,
-          back_seats: backSeats
+          back_seats: backSeats,
+          direction: S.dir || "AT"
         });
         btn.disabled = false; btn.textContent = "🚕 Navbatga qo'shilish";
         if (res.ok) {
